@@ -1,11 +1,12 @@
+# 레포 루트가 프론트일 때 사용 (napolmefrontend 레포용)
 FROM node:20 AS build
 WORKDIR /app
-COPY frontend/package*.json ./
+COPY package*.json ./
 RUN npm install
-COPY frontend/ ./
+COPY . ./
 RUN npm run build
 
 FROM nginx:1.25-alpine
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80

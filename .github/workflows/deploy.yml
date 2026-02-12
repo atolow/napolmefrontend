@@ -1,0 +1,54 @@
+# napolmefrontend 레포 전용: push 시 프론트만 빌드·ECR 푸시·EC2 프론트 컨테이너만 교체
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main, master]
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REGISTRY: 987667665472.dkr.ecr.ap-northeast-2.amazonaws.com
+  FRONTEND_REPO: napolme-frontend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Frontend
+        run: |
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_REPO }}:latest .
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_REPO }}:latest
+
+      - name: Deploy Frontend to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            export AWS_REGION=ap-northeast-2
+            export ECR_REGISTRY=987667665472.dkr.ecr.ap-northeast-2.amazonaws.com
+            export FRONTEND_IMAGE=$ECR_REGISTRY/napolme-frontend:latest
+
+            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+            docker pull $FRONTEND_IMAGE
+
+            docker stop frontend 2>/dev/null || true
+            docker rm frontend 2>/dev/null || true
+            docker run -d -p 80:80 --name frontend --restart unless-stopped $FRONTEND_IMAGE
+
+            docker image prune -f
