@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Link,
   Route,
@@ -11,31 +12,38 @@ import SearchResultsPage from "./pages/SearchResultsPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 
-const sideAds = [
-  { role: "Backend Developer", company: "Wanted", action: "지원하기" },
-  { role: "Backend & 서버개발", company: "Wanted", action: "지원하기" },
-  { role: "빌드파이프 담당", company: "Wanted", action: "지원하기" },
-];
+declare global {
+  interface Window {
+    adsbygoogle: unknown[];
+  }
+}
+
+const AD_CLIENT = "ca-pub-6520329273313822";
+const AD_SLOT = "2232052568"; /* napolme */
 
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const isSearchRoute = location.pathname === "/";
 
+  useEffect(() => {
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (_) {}
+  }, []);
+
   return (
     <div className="page">
       <aside className="side side-left">
-        <div className="ad-card ad-card--stack">
-          {sideAds.map((ad) => (
-            <div className="ad-item" key={`${ad.role}-left`}>
-              <div className="ad-logo">wanted</div>
-              <div className="ad-role">{ad.role}</div>
-              <div className="ad-company">{ad.company}</div>
-              <button className="ad-button" type="button">
-                {ad.action}
-              </button>
-            </div>
-          ))}
+        <div className="ad-card ad-card--stack ad-card--adsense">
+          <ins
+            className="adsbygoogle"
+            style={{ display: "block" }}
+            data-ad-client={AD_CLIENT}
+            data-ad-slot={AD_SLOT}
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          />
         </div>
       </aside>
 
@@ -107,17 +115,15 @@ export default function App() {
       </main>
 
       <aside className="side side-right">
-        <div className="ad-card ad-card--stack">
-          {sideAds.map((ad) => (
-            <div className="ad-item" key={`${ad.role}-right`}>
-              <div className="ad-logo">wanted</div>
-              <div className="ad-role">{ad.role}</div>
-              <div className="ad-company">{ad.company}</div>
-              <button className="ad-button" type="button">
-                {ad.action}
-              </button>
-            </div>
-          ))}
+        <div className="ad-card ad-card--stack ad-card--adsense">
+          <ins
+            className="adsbygoogle"
+            style={{ display: "block" }}
+            data-ad-client={AD_CLIENT}
+            data-ad-slot={AD_SLOT}
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          />
         </div>
       </aside>
     </div>

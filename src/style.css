@@ -64,6 +64,14 @@ select {
   padding: 16px 14px;
 }
 
+.ad-card--adsense {
+  min-height: 200px;
+}
+
+.ad-card--adsense .adsbygoogle {
+  min-height: 100px;
+}
+
 .ad-item {
   display: flex;
   flex-direction: column;
