@@ -385,16 +385,9 @@ export default function CharacterDetailPage() {
     setSearchStatus("");
     setSearchResults([]);
     try {
-      const response = await characterApi.search({
-        query: trimmedQuery,
-        server:
-          serverIdFilter === ALL_SERVER_OPTION.id ? undefined : serverIdFilter,
-        race:
-          serverFilter === "elyos"
-            ? 1
-            : serverFilter === "asmo"
-              ? 2
-              : undefined,
+      const response = await characterApi.searchCharacters({
+        server: serverIdFilter,
+        name: trimmedQuery,
       });
       const payload = response.data;
       if (
