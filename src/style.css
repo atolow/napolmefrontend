@@ -1696,6 +1696,10 @@ a.panel-sub:focus {
   color: #94a3b8;
 }
 
+.detail-refresh-btn {
+  color: #fff;
+}
+
 .detail-updated {
   color: #64748b;
 }

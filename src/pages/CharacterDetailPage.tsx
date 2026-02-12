@@ -217,9 +217,6 @@ export default function CharacterDetailPage() {
     left: 0,
     top: 0,
   });
-  const REFRESH_COOLDOWN_SECONDS = 60;
-  const REFRESH_COOLDOWN_STORAGE_KEY = "napolme:characterRefreshAt";
-
   const [savedCharacterId, setSavedCharacterId] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshCooldownSeconds, setRefreshCooldownSeconds] = useState(0);
@@ -290,25 +287,10 @@ export default function CharacterDetailPage() {
       .then((res) => {
         const id = res.data?.data?.id;
         setSavedCharacterId(typeof id === "number" ? id : null);
+        const cooldown = res.data?.cooldown ?? 0;
+        setRefreshCooldownSeconds(Math.max(0, cooldown));
       })
       .catch(() => setSavedCharacterId(null));
-  }, [serverId, decodedCharacterId]);
-
-  // 새로고침 후에도 정보 갱신 쿨다운 유지 (localStorage)
-  useEffect(() => {
-    if (!serverId || !decodedCharacterId) return;
-    const key = `${REFRESH_COOLDOWN_STORAGE_KEY}:${serverId}:${decodedCharacterId}`;
-    try {
-      const stored = localStorage.getItem(key);
-      if (stored) {
-        const elapsed = (Date.now() - Number(stored)) / 1000;
-        if (elapsed < REFRESH_COOLDOWN_SECONDS) {
-          setRefreshCooldownSeconds(Math.ceil(REFRESH_COOLDOWN_SECONDS - elapsed));
-        }
-      }
-    } catch {
-      // ignore
-    }
   }, [serverId, decodedCharacterId]);
 
   useEffect(() => {
@@ -345,21 +327,18 @@ export default function CharacterDetailPage() {
     if (!serverId || !decodedCharacterId || isRefreshing || refreshCooldownSeconds > 0) return;
     setIsRefreshing(true);
     try {
+      let cooldown = 0;
       if (savedCharacterId != null) {
-        await characterApi.refreshCharacter(savedCharacterId);
+        const res = await characterApi.refreshCharacter(savedCharacterId);
+        cooldown = res.data?.cooldown ?? 0;
       } else {
         const res = await characterApi.fetchByRef(serverId, decodedCharacterId);
         const id = res.data?.data?.id;
         if (typeof id === "number") setSavedCharacterId(id);
+        cooldown = res.data?.cooldown ?? 0;
       }
       await fetchDetail();
-      setRefreshCooldownSeconds(REFRESH_COOLDOWN_SECONDS);
-      try {
-        const key = `${REFRESH_COOLDOWN_STORAGE_KEY}:${serverId}:${decodedCharacterId}`;
-        localStorage.setItem(key, String(Date.now()));
-      } catch {
-        // ignore
-      }
+      setRefreshCooldownSeconds(Math.max(0, cooldown));
     } finally {
       setIsRefreshing(false);
     }
@@ -745,7 +724,7 @@ export default function CharacterDetailPage() {
         </div>
         <div className="detail-actions">
           <button
-            className="primary"
+            className="primary detail-refresh-btn"
             type="button"
             onClick={handleRefreshSaved}
             disabled={isRefreshing || refreshCooldownSeconds > 0}

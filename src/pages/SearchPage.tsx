@@ -94,19 +94,6 @@ const serverFilterLabels = {
   asmo: '마족 서버',
 }
 
-const useDebouncedValue = <T,>(value: T, delayMs = 300) => {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDebouncedValue(value)
-    }, delayMs)
-    return () => window.clearTimeout(timer)
-  }, [value, delayMs])
-
-  return debouncedValue
-}
-
 const formatDateTime = (value?: string | null) => {
   if (!value) {
     return ''
@@ -138,7 +125,6 @@ export default function SearchPage() {
   const [isSearching, setIsSearching] = useState(false)
   const [searchResult, setSearchResult] =
     useState<CharacterSearchResponse | null>(null)
-  const debouncedQuery = useDebouncedValue(query, 350)
   const [updates, setUpdates] = useState<BoardUpdateItem[]>([])
   const [updateStatus, setUpdateStatus] = useState('')
 
@@ -187,7 +173,7 @@ export default function SearchPage() {
   const helperMessage = statusMessage
 
   const handleSearch = async (searchQuery?: string) => {
-    const trimmedQuery = (searchQuery ?? debouncedQuery).trim()
+    const trimmedQuery = (searchQuery ?? query).trim()
     if (!trimmedQuery || isSearchDisabled) {
       if (!trimmedQuery) {
         setStatusMessage('검색어를 입력해주세요.')
