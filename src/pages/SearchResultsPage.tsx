@@ -84,6 +84,9 @@ export default function SearchResultsPage() {
           <span>검색어: {query || '-'}</span>
           {serverId && serverId !== 'ALL' ? <span>서버: {serverId}</span> : null}
         </div>
+        {statusMessage ? (
+          <div className="search-list-status">{statusMessage}</div>
+        ) : null}
         {isLoading && <div className="detail-loading">불러오는 중...</div>}
         {searchResult && (
           <>
