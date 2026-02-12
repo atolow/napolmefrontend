@@ -209,21 +209,14 @@ export default function SearchPage() {
     setSearchResult(null)
 
     try {
-      const response = await characterApi.search({
-        query: trimmedQuery,
-        server: serverId === ALL_SERVER_OPTION.id ? undefined : serverId,
-        race:
-          serverFilter === 'elyos'
-            ? 1
-            : serverFilter === 'asmo'
-              ? 2
-              : undefined,
+      const response = await characterApi.searchCharacters({
+        server: serverId,
+        name: trimmedQuery,
       })
       const payload = response.data
       setStatusMessage(payload.message || '검색 완료')
       setSearchResult(payload.data)
       if (
-        serverId !== ALL_SERVER_OPTION.id &&
         payload.data.items.length === 1 &&
         payload.data.items[0]
       ) {
@@ -405,7 +398,7 @@ export default function SearchPage() {
       <section className="grid mid-grid">
         <div className="panel">
           <div className="panel-title">
-            <span>아트 전투 점수 TOP 5</span>
+            <span>나폴미 점수 TOP 5</span>
             <span className="panel-sub">금주 기준</span>
           </div>
           <ul className="ranking-list">

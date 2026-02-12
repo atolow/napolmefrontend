@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { characterApi } from "../api";
+import { characterApi, combatScoreApi } from "../api";
+import type { CombatScoreResponse } from "../api/combatScoreApi";
 import type {
   CharacterDaevanionBundleResponse,
   CharacterEquipmentItemResponse,
@@ -153,11 +154,6 @@ const formatDateTime = (value?: string | null) => {
   if (!value) {
     return "";
   }
-  const normalized = value.replace("T", " ");
-  const match = normalized.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
-  if (match) {
-    return match[0];
-  }
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
     return value;
@@ -221,6 +217,15 @@ export default function CharacterDetailPage() {
     left: 0,
     top: 0,
   });
+  const REFRESH_COOLDOWN_SECONDS = 60;
+  const REFRESH_COOLDOWN_STORAGE_KEY = "napolme:characterRefreshAt";
+
+  const [savedCharacterId, setSavedCharacterId] = useState<number | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshCooldownSeconds, setRefreshCooldownSeconds] = useState(0);
+  const [combatScore, setCombatScore] = useState<CombatScoreResponse | null>(null);
+  const [combatScoreLoading, setCombatScoreLoading] = useState(false);
+  const [combatScoreError, setCombatScoreError] = useState<string | null>(null);
 
   const decodedCharacterId = characterId ? decodeURIComponent(characterId) : "";
 
@@ -238,42 +243,127 @@ export default function CharacterDetailPage() {
     setServerIdFilter(ALL_SERVER_OPTION.id);
   }, [serverFilter]);
 
+  const fetchDetail = async () => {
+    if (!serverId || !decodedCharacterId) return;
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      const [infoResponse, bundleResponse] = await Promise.all([
+        characterApi.getInfo(serverId, decodedCharacterId),
+        characterApi.getEquipmentBundle(serverId, decodedCharacterId),
+      ]);
+      setCharacterInfo(infoResponse.data.data);
+      setCharacterEquipment(bundleResponse.data.data.equipment);
+      const detailMap: Record<string, CharacterEquipmentItemResponse> = {};
+      const failureMap: Record<string, boolean> = {};
+      (bundleResponse.data.data.details ?? []).forEach((item) => {
+        if (item.detail) {
+          detailMap[item.key] = item.detail;
+        } else {
+          failureMap[item.key] = true;
+        }
+      });
+      setEquipmentDetails(detailMap);
+      setEquipmentDetailFailures(failureMap);
+    } catch (error) {
+      setErrorMessage("캐릭터 정보를 불러오지 못했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!serverId || !decodedCharacterId) {
       setErrorMessage("캐릭터 정보를 찾을 수 없습니다.");
       return;
     }
-
-    const fetchDetail = async () => {
-      setIsLoading(true);
-      setErrorMessage("");
-      try {
-        const [infoResponse, bundleResponse] = await Promise.all([
-          characterApi.getInfo(serverId, decodedCharacterId),
-          characterApi.getEquipmentBundle(serverId, decodedCharacterId),
-        ]);
-        setCharacterInfo(infoResponse.data.data);
-        setCharacterEquipment(bundleResponse.data.data.equipment);
-        const detailMap: Record<string, CharacterEquipmentItemResponse> = {};
-        const failureMap: Record<string, boolean> = {};
-        (bundleResponse.data.data.details ?? []).forEach((item) => {
-          if (item.detail) {
-            detailMap[item.key] = item.detail;
-          } else {
-            failureMap[item.key] = true;
-          }
-        });
-        setEquipmentDetails(detailMap);
-        setEquipmentDetailFailures(failureMap);
-      } catch (error) {
-        setErrorMessage("캐릭터 정보를 불러오지 못했습니다.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchDetail();
   }, [serverId, decodedCharacterId]);
+
+  useEffect(() => {
+    if (!serverId || !decodedCharacterId) {
+      setSavedCharacterId(null);
+      return;
+    }
+    characterApi
+      .getCharacterByRef(serverId, decodedCharacterId)
+      .then((res) => {
+        const id = res.data?.data?.id;
+        setSavedCharacterId(typeof id === "number" ? id : null);
+      })
+      .catch(() => setSavedCharacterId(null));
+  }, [serverId, decodedCharacterId]);
+
+  // 새로고침 후에도 정보 갱신 쿨다운 유지 (localStorage)
+  useEffect(() => {
+    if (!serverId || !decodedCharacterId) return;
+    const key = `${REFRESH_COOLDOWN_STORAGE_KEY}:${serverId}:${decodedCharacterId}`;
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const elapsed = (Date.now() - Number(stored)) / 1000;
+        if (elapsed < REFRESH_COOLDOWN_SECONDS) {
+          setRefreshCooldownSeconds(Math.ceil(REFRESH_COOLDOWN_SECONDS - elapsed));
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [serverId, decodedCharacterId]);
+
+  useEffect(() => {
+    if (!serverId || !decodedCharacterId) {
+      setCombatScore(null);
+      setCombatScoreError(null);
+      return;
+    }
+    setCombatScoreLoading(true);
+    setCombatScoreError(null);
+    combatScoreApi
+      .getCombatScore(serverId, decodedCharacterId)
+      .then((res) => {
+        const data = res.data?.data;
+        if (data) setCombatScore(data);
+        else setCombatScoreError("점수를 불러올 수 없습니다.");
+      })
+      .catch(() => {
+        setCombatScore(null);
+        setCombatScoreError("나폴미 점수를 계산할 수 없습니다.");
+      })
+      .finally(() => setCombatScoreLoading(false));
+  }, [serverId, decodedCharacterId]);
+
+  useEffect(() => {
+    if (refreshCooldownSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setRefreshCooldownSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [refreshCooldownSeconds]);
+
+  const handleRefreshSaved = async () => {
+    if (!serverId || !decodedCharacterId || isRefreshing || refreshCooldownSeconds > 0) return;
+    setIsRefreshing(true);
+    try {
+      if (savedCharacterId != null) {
+        await characterApi.refreshCharacter(savedCharacterId);
+      } else {
+        const res = await characterApi.fetchByRef(serverId, decodedCharacterId);
+        const id = res.data?.data?.id;
+        if (typeof id === "number") setSavedCharacterId(id);
+      }
+      await fetchDetail();
+      setRefreshCooldownSeconds(REFRESH_COOLDOWN_SECONDS);
+      try {
+        const key = `${REFRESH_COOLDOWN_STORAGE_KEY}:${serverId}:${decodedCharacterId}`;
+        localStorage.setItem(key, String(Date.now()));
+      } catch {
+        // ignore
+      }
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleSearch = async () => {
     const trimmedQuery = searchQuery.trim();
@@ -661,8 +751,18 @@ export default function CharacterDetailPage() {
           </div>
         </div>
         <div className="detail-actions">
-          <button className="ghost" type="button" onClick={() => navigate("/")}>
-            캐릭터 검색
+          <button
+            className="primary"
+            type="button"
+            onClick={handleRefreshSaved}
+            disabled={isRefreshing || refreshCooldownSeconds > 0}
+            title={refreshCooldownSeconds > 0 ? `${refreshCooldownSeconds}초 후 갱신 가능` : undefined}
+          >
+            {isRefreshing
+              ? "갱신 중…"
+              : refreshCooldownSeconds > 0
+                ? `정보 갱신 (${refreshCooldownSeconds}초 후)`
+                : "정보 갱신"}
           </button>
           <span className="detail-updated">
             {characterInfo?.lastUpdated
@@ -670,6 +770,32 @@ export default function CharacterDetailPage() {
               : "업데이트 정보 없음"}
           </span>
         </div>
+      </div>
+
+      <div className="panel napolme-score-card">
+        <div className="napolme-score-card__title">나폴미 점수</div>
+        {combatScoreLoading && (
+          <div className="napolme-score-card__loading">계산 중...</div>
+        )}
+        {combatScoreError && !combatScoreLoading && (
+          <div className="napolme-score-card__error">{combatScoreError}</div>
+        )}
+        {!combatScoreLoading && !combatScoreError && combatScore && (
+          <>
+            <div className="napolme-score-card__highest">
+              달성 최고 점수:{" "}
+              <span className="napolme-score-card__value">
+                {combatScore.totalCombatPower.toLocaleString()}
+              </span>
+            </div>
+            <div className="napolme-score-card__current">
+              {combatScore.totalCombatPower.toLocaleString()}
+            </div>
+            <div className="napolme-score-card__meta">
+              전투 점수 등급 {combatScore.grade}
+            </div>
+          </>
+        )}
       </div>
 
       {errorMessage && <div className="result-empty">{errorMessage}</div>}

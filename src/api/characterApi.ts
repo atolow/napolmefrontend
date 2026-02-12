@@ -65,6 +65,30 @@ export type CharacterSearchParams = {
   race?: number
 }
 
+/** POST /api/characters/fetch 응답 (URL로 가져온 저장 캐릭터) */
+export type CharacterResponse = {
+  id: number
+  characterId: string
+  serverId: string
+  nickname: string
+  level: number | null
+  serverName: string | null
+  className: string | null
+  guild: string | null
+  profileImage: string | null
+  itemLevel: number | null
+  lastSyncedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** /api/characters/search 요청: server+name 또는 nickname */
+export type CharactersSearchParams = {
+  server?: string
+  name?: string
+  nickname?: string
+}
+
 export type CharacterInfoResponse = {
   characterId: string
   name: string
@@ -269,10 +293,57 @@ export type CharacterDaevanionBundleResponse = {
   cache: CachePolicy
 }
 export const characterApi = {
+  /** 기존 검색 (전체 서버 등): /api/character/search */
   search(params: CharacterSearchParams) {
     return http.get<ApiResponse<CharacterSearchResponse>>(
       '/api/character/search',
       { params },
+    )
+  },
+
+  /** 새 검색: server+name 또는 nickname → /api/characters/search */
+  searchCharacters(params: CharactersSearchParams) {
+    return http.get<ApiResponse<CharacterSearchResponse>>(
+      '/api/characters/search',
+      { params },
+    )
+  },
+
+  /** URL로 캐릭터 가져오기·저장 → /api/characters/fetch */
+  fetchByUrl(url: string) {
+    return http.post<ApiResponse<CharacterResponse>>('/api/characters/fetch', {
+      url,
+    })
+  },
+
+  /** 저장된 캐릭터 ID로 조회 → /api/characters/:id */
+  getCharacterById(id: number) {
+    return http.get<ApiResponse<CharacterResponse>>(
+      `/api/characters/${id}`,
+    )
+  },
+
+  /** serverId+characterId로 저장된 캐릭터 조회 (갱신 버튼 노출용) → /api/characters/by-ref */
+  getCharacterByRef(serverId: string, characterId: string) {
+    return http.get<ApiResponse<CharacterResponse>>(
+      '/api/characters/by-ref',
+      { params: { serverId, characterId } },
+    )
+  },
+
+  /** serverId+characterId로 저장 (없으면 공식 API 조회 후 저장) → /api/characters/fetch-by-ref */
+  fetchByRef(serverId: string, characterId: string) {
+    return http.post<ApiResponse<CharacterResponse>>(
+      '/api/characters/fetch-by-ref',
+      null,
+      { params: { serverId, characterId } },
+    )
+  },
+
+  /** 저장된 캐릭터 갱신 → /api/characters/:id/refresh */
+  refreshCharacter(id: number) {
+    return http.post<ApiResponse<CharacterResponse>>(
+      `/api/characters/${id}/refresh`,
     )
   },
 

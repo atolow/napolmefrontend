@@ -48,13 +48,16 @@ export default function SearchResultsPage() {
       setStatusMessage('')
       setSearchResult(null)
       try {
-        const response = await characterApi.search({
-          query,
-          server: serverId && serverId !== 'ALL' ? serverId : undefined,
-          race: getRaceParam(raceFilter),
-        })
+        const useNewSearch = serverId && serverId !== 'ALL'
+        const response = useNewSearch
+          ? await characterApi.searchCharacters({ server: serverId, name: query })
+          : await characterApi.search({
+              query,
+              server: undefined,
+              race: getRaceParam(raceFilter),
+            })
         setSearchResult(response.data.data)
-        setStatusMessage(response.data.message || '검색 완료')
+        setStatusMessage('')
       } catch (error) {
         setStatusMessage('현재 서버 부하가 높음')
         setSearchResult(null)

@@ -1700,6 +1700,58 @@ a.panel-sub:focus {
   color: #64748b;
 }
 
+/* 나폴미 점수 카드 (캐릭터 상세 헤더 아래) */
+.napolme-score-card {
+  background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f1623 100%);
+  border: 1px solid #2d2d5a;
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.napolme-score-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin-bottom: 4px;
+}
+
+.napolme-score-card__highest {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.napolme-score-card__highest .napolme-score-card__value {
+  font-weight: 700;
+  color: #a78bfa;
+}
+
+.napolme-score-card__current {
+  font-size: 28px;
+  font-weight: 700;
+  color: #a78bfa;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.napolme-score-card__meta {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.napolme-score-card__loading,
+.napolme-score-card__error {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.napolme-score-card__error {
+  color: #f87171;
+}
+
 .detail-summary {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
