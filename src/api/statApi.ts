@@ -19,6 +19,8 @@ export type DailySearchRankItem = {
   count: number
   /** 전일 대비 순위 변동: up(▲), down(▼), same/new(-) */
   rankChange: string
+  /** 순위 변동 폭 (올라간/내려간 칸 수, same/new일 때 0) */
+  changeAmount?: number
   /** elyos(천족) | asmo(마족) | null */
   tribe?: string | null
 }

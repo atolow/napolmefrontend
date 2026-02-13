@@ -1773,6 +1773,47 @@ a.live-card:hover {
   color: #f97316;
 }
 
+/* 스킨/코스튬 패널 (맨 아래, 크기·간격 확대) */
+.skin-costume-panel {
+  margin-top: 12px;
+  padding: 18px 20px;
+}
+
+.skin-costume-panel .skin-costume-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #e2e8f0;
+  letter-spacing: -0.02em;
+}
+
+.skin-costume-panel .gear-skins--large {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+}
+
+.skin-costume-panel .skin-chip {
+  padding: 10px 18px;
+  font-size: 14px;
+  gap: 10px;
+  border-radius: 12px;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.skin-costume-panel .skin-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+.skin-costume-panel .skin-name {
+  max-width: 280px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
 .skill-columns {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

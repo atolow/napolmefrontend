@@ -1644,31 +1644,6 @@ export default function CharacterDetailPage() {
                 </div>
               );
             })}
-            <div className="subpanel-title">스킨/코스튬</div>
-            <div className="gear-skins">
-              {(characterEquipment?.skinList ?? []).map((item) => (
-                <div
-                  className="skin-chip"
-                  key={`${item.id}-${item.slotPosName}`}
-                >
-                  {item.icon ? (
-                    <img
-                      src={item.icon}
-                      alt={item.name ?? "skin"}
-                      className="skin-icon"
-                    />
-                  ) : (
-                    <div className="skin-icon placeholder" />
-                  )}
-                  <span
-                    className="skin-name"
-                    data-grade={item.grade ?? "Common"}
-                  >
-                    {item.name ?? "-"}
-                  </span>
-                </div>
-              ))}
-            </div>
           </div>
 
           {(equipmentGroups.arcana ?? []).length > 0 && (
@@ -1951,6 +1926,34 @@ export default function CharacterDetailPage() {
                 </div>
                 <div className="petwing-sub" />
               </div>
+            </div>
+          </div>
+
+          <div className="panel skin-costume-panel">
+            <div className="subpanel-title skin-costume-title">스킨/코스튬</div>
+            <div className="gear-skins gear-skins--large">
+              {(characterEquipment?.skinList ?? []).map((item) => (
+                <div
+                  className="skin-chip"
+                  key={`${item.id}-${item.slotPosName}`}
+                >
+                  {item.icon ? (
+                    <img
+                      src={item.icon}
+                      alt={item.name ?? "skin"}
+                      className="skin-icon"
+                    />
+                  ) : (
+                    <div className="skin-icon placeholder" />
+                  )}
+                  <span
+                    className="skin-name"
+                    data-grade={item.grade ?? "Common"}
+                  >
+                    {item.name ?? "-"}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

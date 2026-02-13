@@ -311,9 +311,9 @@ export default function SearchPage() {
                   }`}
                 >
                   {item.rankChange === 'up'
-                    ? '▲'
+                    ? (item.changeAmount ? `${item.changeAmount} ` : '') + '▲'
                     : item.rankChange === 'down'
-                      ? '▼'
+                      ? (item.changeAmount ? `${item.changeAmount} ` : '') + '▼'
                       : '-'}
                 </span>
               </li>
