@@ -109,6 +109,18 @@ const formatDateTime = (value?: string | null) => {
   )} ${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`
 }
 
+/** 일일 검색 랭킹 순위 변동 표시: 7▲(7위 상승) / 3▼(3위 하락) / - */
+function formatRankChange(
+  rankChange: string | undefined,
+  changeAmount?: number
+): string {
+  const n = Number(changeAmount)
+  const amount = Number.isFinite(n) && n > 0 ? n : 0
+  if (rankChange === 'up') return amount > 0 ? `${amount}▲` : '▲'
+  if (rankChange === 'down') return amount > 0 ? `${amount}▼` : '▼'
+  return '-'
+}
+
 export default function SearchPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
@@ -249,6 +261,11 @@ export default function SearchPage() {
       const payload = response.data
       setStatusMessage(payload.message || '검색 완료')
       setSearchResult(payload.data)
+      // 검색 후 랭킹 갱신 → 서버가 직전 랭킹과 비교해 N▲/N▼ 계산
+      statApi
+        .getDailySearchRanking()
+        .then((res) => setDailySearchRanking(res.data?.data ?? []))
+        .catch(() => {})
       if (
         payload.data.items.length === 1 &&
         payload.data.items[0]
@@ -322,11 +339,11 @@ export default function SearchPage() {
                         : ''
                   }`}
                 >
-                  {item.rankChange === 'up'
-                    ? (item.changeAmount ? `${item.changeAmount} ` : '') + '▲'
-                    : item.rankChange === 'down'
-                      ? (item.changeAmount ? `${item.changeAmount} ` : '') + '▼'
-                      : '-'}
+                  {formatRankChange(
+                    item.rankChange,
+                    item.changeAmount ??
+                      (item as { change_amount?: number }).change_amount
+                  )}
                 </span>
               </li>
             ))}
