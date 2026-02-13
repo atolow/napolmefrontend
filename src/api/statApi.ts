@@ -14,8 +14,52 @@ export type PopularStatResponse = {
   cache: CachePolicy
 }
 
+export type DailySearchRankItem = {
+  name: string
+  count: number
+  /** 전일 대비 순위 변동: up(▲), down(▼), same/new(-) */
+  rankChange: string
+  /** elyos(천족) | asmo(마족) | null */
+  tribe?: string | null
+}
+
+export type NapolmeRankItem = {
+  nickname: string
+  napolmePoint: number
+  serverName: string | null
+}
+
+export type NapolmeRankingResponse = {
+  elyos: NapolmeRankItem[]
+  asmo: NapolmeRankItem[]
+}
+
+export type ChzzkLiveItem = {
+  liveId: number
+  liveTitle: string
+  liveImageUrl: string | null
+  concurrentUserCount: number
+  channelId: string
+  channelName: string
+  channelImageUrl: string | null
+  liveUrl: string
+}
+
 export const statApi = {
   getPopular() {
     return http.get<ApiResponse<PopularStatResponse>>('/api/stat/popular')
   },
+
+  getDailySearchRanking() {
+    return http.get<ApiResponse<DailySearchRankItem[]>>('/api/stat/daily-search-ranking')
+  },
+
+  getNapolmeRanking() {
+    return http.get<ApiResponse<NapolmeRankingResponse>>('/api/stat/napolme-ranking')
+  },
+
+  getChzzkLives() {
+    return http.get<ApiResponse<ChzzkLiveItem[]>>('/api/stat/chzzk-lives')
+  },
+
 }

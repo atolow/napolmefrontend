@@ -9,6 +9,13 @@ import type {
   CharacterInfoResponse,
   CharacterSummary,
 } from "../api/characterApi";
+import {
+  addFavorite,
+  getFavorites,
+  isFavorite,
+  removeFavorite,
+  type FavoriteCharacter,
+} from "../lib/favorites";
 
 const SKILL_LABELS: Record<string, string> = {
   Active: "액티브",
@@ -223,8 +230,31 @@ export default function CharacterDetailPage() {
   const [combatScore, setCombatScore] = useState<CombatScoreResponse | null>(null);
   const [combatScoreLoading, setCombatScoreLoading] = useState(false);
   const [combatScoreError, setCombatScoreError] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<FavoriteCharacter[]>(() =>
+    getFavorites(),
+  );
 
   const decodedCharacterId = characterId ? decodeURIComponent(characterId) : "";
+  const currentIsFavorite =
+    !!serverId &&
+    !!decodedCharacterId &&
+    isFavorite(serverId, decodedCharacterId);
+
+  const handleToggleDetailFavorite = () => {
+    if (!serverId || !decodedCharacterId) return;
+    if (currentIsFavorite) {
+      setFavorites((prev) => removeFavorite(serverId, decodedCharacterId));
+    } else {
+      const char: FavoriteCharacter = {
+        serverId,
+        characterId: decodedCharacterId,
+        name: characterInfo?.name,
+        serverName: characterInfo?.serverName ?? undefined,
+        profileImage: characterInfo?.profileImage ?? undefined,
+      };
+      setFavorites(() => addFavorite(char));
+    }
+  };
 
   const serverOptions = useMemo(() => {
     if (serverFilter === "elyos") {
@@ -715,10 +745,22 @@ export default function CharacterDetailPage() {
             <div className="detail-title">
               {characterInfo?.name ?? "캐릭터"}
             </div>
-            <div className="detail-subtitle">
-              {characterInfo?.serverName ?? "서버 미확인"}
-              {characterInfo?.level ? ` · Lv.${characterInfo.level}` : ""}
-              {characterInfo?.className ? ` · ${characterInfo.className}` : ""}
+            <div className="detail-subtitle-row">
+              <span className="detail-subtitle">
+                {characterInfo?.serverName ?? "서버 미확인"}
+                {characterInfo?.level ? ` · Lv.${characterInfo.level}` : ""}
+                {characterInfo?.className ? ` · ${characterInfo.className}` : ""}
+              </span>
+              {serverId && decodedCharacterId && (
+                <button
+                  type="button"
+                  className={`favorite-star ${currentIsFavorite ? "is-favorite" : ""}`}
+                  aria-label={currentIsFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
+                  onClick={handleToggleDetailFavorite}
+                >
+                  {currentIsFavorite ? "★" : "☆"}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -741,6 +783,68 @@ export default function CharacterDetailPage() {
               ? `업데이트 ${formatDateTime(characterInfo.lastUpdated)}`
               : "업데이트 정보 없음"}
           </span>
+        </div>
+      </div>
+
+      <div className="favorites-panel detail-favorites-panel">
+        <div className="panel-title favorites-panel-title">
+          <span className="favorites-panel-title-left">
+            <span className="favorites-panel-title-icon">★</span>
+            <span>즐겨찾기한 캐릭터</span>
+          </span>
+          <span className="panel-sub">{favorites.length}명</span>
+        </div>
+        <div className="favorites-panel-body">
+          {favorites.length === 0 ? (
+            <div className="favorites-empty">
+              즐겨찾는 캐릭터를 등록해보세요
+            </div>
+          ) : (
+            <ul className="favorites-list">
+              {favorites.map((fav) => (
+                <li key={`${fav.serverId}-${fav.characterId}`}>
+                  <button
+                    type="button"
+                    className="favorites-item"
+                    onClick={() => {
+                      const encodedId = encodeURIComponent(fav.characterId);
+                      navigate(`/character/${fav.serverId}/${encodedId}`);
+                    }}
+                  >
+                    <div className="favorites-item-avatar">
+                      {fav.profileImage ? (
+                        <img src={fav.profileImage} alt={fav.name ?? ""} />
+                      ) : (
+                        <div className="favorites-item-avatar placeholder" />
+                      )}
+                    </div>
+                    <div className="favorites-item-text">
+                      <span className="favorites-item-name">
+                        {fav.name ?? fav.characterId}
+                      </span>
+                      <span className="favorites-item-server">
+                        {fav.serverName ?? fav.serverId}
+                      </span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    className="favorite-star is-favorite"
+                    aria-label="즐겨찾기 해제"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setFavorites(() =>
+                        removeFavorite(fav.serverId, fav.characterId),
+                      );
+                    }}
+                  >
+                    ★
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 

@@ -84,9 +84,14 @@ export default function App() {
             </button>
           </nav>
 
-          <button className="cta" type="button">
-            AION2 웹 던스트
-          </button>
+          <span className="cta-discord" role="presentation" aria-label="아이온2 공식 디코방">
+            <img
+              src="/discord-icon.png"
+              alt=""
+              className="cta-discord-icon"
+            />
+            <span className="cta-discord-text">아이온2 공식 디코방</span>
+          </span>
         </header>
 
         <Routes>

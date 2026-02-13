@@ -1,24 +1,21 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { characterApi } from '../api'
+import { characterApi, statApi } from '../api'
 import type { CharacterSearchResponse, CharacterSummary } from '../api/characterApi'
 import type { BoardUpdateItem } from '../api/characterApi'
-
-const dailyRanking = [
-  { name: '린', count: '274,854' },
-  { name: '레비아', count: '263,942' },
-  { name: '카이슈', count: '255,188' },
-  { name: '세베니', count: '253,074' },
-  { name: '베르카', count: '248,903' },
-]
-
-const topScores = [
-  { name: '레비아', score: '388,214' },
-  { name: '헤리스', score: '370,429' },
-  { name: '비테르', score: '358,885' },
-  { name: '루카', score: '351,772' },
-  { name: '세라', score: '346,219' },
-]
+import type {
+  ChzzkLiveItem,
+  DailySearchRankItem,
+  NapolmeRankItem,
+  NapolmeRankingResponse,
+} from '../api/statApi'
+import {
+  getFavorites,
+  isFavorite,
+  removeFavorite,
+  toggleFavorite,
+  type FavoriteCharacter,
+} from '../lib/favorites'
 
 const serverInfo = [
   { name: '하이네', online: '40,924', rate: '50.05%', trend: 'up' },
@@ -31,12 +28,7 @@ const serverInfo = [
   { name: '오르타', online: '21,829', rate: '30.12%', trend: 'down' },
 ]
 
-const liveItems = [
-  { title: '어비스 (PvP)', viewers: '2,482' },
-  { title: '정령 (사냥)', viewers: '1,924' },
-  { title: '로데스 (던전)', viewers: '1,632' },
-  { title: '하늘성 (레이드)', viewers: '1,228' },
-]
+const CHZZK_REFRESH_MS = 30 * 60 * 1000
 
 const ALL_SERVER_OPTION = { name: '전체 서버에서 검색', id: 'ALL' }
 
@@ -94,14 +86,19 @@ const serverFilterLabels = {
   asmo: '마족 서버',
 }
 
+/** 날짜·시간 표시 (초 제외, YYYY-MM-DD HH:mm) */
 const formatDateTime = (value?: string | null) => {
   if (!value) {
     return ''
   }
   const normalized = value.replace('T', ' ')
-  const match = normalized.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)
+  const match = normalized.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/)
   if (match) {
     return match[0]
+  }
+  const fullMatch = normalized.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)
+  if (fullMatch) {
+    return fullMatch[0].slice(0, 16)
   }
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) {
@@ -110,9 +107,7 @@ const formatDateTime = (value?: string | null) => {
   const pad = (num: number) => String(num).padStart(2, '0')
   return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(
     parsed.getDate(),
-  )} ${pad(parsed.getHours())}:${pad(parsed.getMinutes())}:${pad(
-    parsed.getSeconds(),
-  )}`
+  )} ${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`
 }
 
 export default function SearchPage() {
@@ -125,6 +120,17 @@ export default function SearchPage() {
   const [isSearching, setIsSearching] = useState(false)
   const [searchResult, setSearchResult] =
     useState<CharacterSearchResponse | null>(null)
+  const [dailySearchRanking, setDailySearchRanking] = useState<
+    DailySearchRankItem[]
+  >([])
+  const [napolmeRanking, setNapolmeRanking] = useState<
+    NapolmeRankingResponse
+  >({ elyos: [], asmo: [] })
+  const [favorites, setFavorites] = useState<FavoriteCharacter[]>(() =>
+    getFavorites(),
+  )
+  const [chzzkLives, setChzzkLives] = useState<ChzzkLiveItem[]>([])
+  const [chzzkLoaded, setChzzkLoaded] = useState(false)
   const [updates, setUpdates] = useState<BoardUpdateItem[]>([])
   const [updateStatus, setUpdateStatus] = useState('')
 
@@ -141,6 +147,40 @@ export default function SearchPage() {
   useEffect(() => {
     setServerId(ALL_SERVER_OPTION.id)
   }, [serverFilter])
+
+  useEffect(() => {
+    statApi
+      .getDailySearchRanking()
+      .then((res) => setDailySearchRanking(res.data?.data ?? []))
+      .catch(() => setDailySearchRanking([]))
+  }, [])
+
+  useEffect(() => {
+    statApi
+      .getNapolmeRanking()
+      .then((res) =>
+        setNapolmeRanking(res.data?.data ?? { elyos: [], asmo: [] }),
+      )
+      .catch(() => setNapolmeRanking({ elyos: [], asmo: [] }))
+  }, [])
+
+  useEffect(() => {
+    const fetchChzzk = () => {
+      statApi
+        .getChzzkLives()
+        .then((res) => {
+          setChzzkLives(res.data?.data ?? [])
+          setChzzkLoaded(true)
+        })
+        .catch(() => {
+          setChzzkLives([])
+          setChzzkLoaded(true)
+        })
+    }
+    fetchChzzk()
+    const timer = window.setInterval(fetchChzzk, CHZZK_REFRESH_MS)
+    return () => window.clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -223,20 +263,60 @@ export default function SearchPage() {
     navigate(`/character/${item.serverId}/${encodedId}`)
   }
 
+  const handleFavoriteClick = useCallback(
+    (e: React.MouseEvent, item: CharacterSummary) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const char: FavoriteCharacter = {
+        serverId: String(item.serverId ?? ''),
+        characterId: item.characterId,
+        name: item.name,
+        serverName: item.serverName ?? undefined,
+        profileImage: item.profileImageUrl ?? undefined,
+      }
+      setFavorites((prev) => toggleFavorite(char, prev))
+    },
+    [],
+  )
+
   return (
     <>
       <section className="grid top-grid">
         <div className="panel">
           <div className="panel-title">
             <span>일일 검색 랭킹</span>
-            <span className="panel-sub">TOP 5</span>
+            <span className="panel-sub">TOP 10</span>
           </div>
           <ul className="ranking-list">
-            {dailyRanking.map((item, index) => (
-              <li key={item.name}>
+            {dailySearchRanking.map((item, index) => (
+              <li key={`${item.name}-${index}`}>
                 <span className="rank-index">{index + 1}</span>
-                <span className="rank-name">{item.name}</span>
-                <span className="rank-count">{item.count}</span>
+                <span
+                  className={`rank-name daily-rank-name ${
+                    item.tribe === 'elyos'
+                      ? 'tribe-elyos'
+                      : item.tribe === 'asmo'
+                        ? 'tribe-asmo'
+                        : ''
+                  }`}
+                >
+                  {item.name}
+                </span>
+                <span
+                  className={`rank-change ${
+                    item.rankChange === 'up'
+                      ? 'rank-up'
+                      : item.rankChange === 'down'
+                        ? 'rank-down'
+                        : ''
+                  }`}
+                >
+                  {item.rankChange === 'up'
+                    ? '▲'
+                    : item.rankChange === 'down'
+                      ? '▼'
+                      : '-'}
+                </span>
               </li>
             ))}
           </ul>
@@ -301,41 +381,73 @@ export default function SearchPage() {
               {isSearching ? '검색 중' : '검색'}
             </button>
           </div>
-          {helperMessage && <div className="search-helper">{helperMessage}</div>}
+          {helperMessage &&
+            !(searchResult && searchResult.items.length === 0) && (
+              <div className="search-helper">{helperMessage}</div>
+            )}
           <div className="result-section">
             {searchResult && (
               <div className="result-state result-success">
-                <div className="result-message">
-                  {statusMessage || '검색 완료'}
-                </div>
+                {searchResult.items.length > 0 && (
+                  <div className="result-message">
+                    {statusMessage || '검색 완료'}
+                  </div>
+                )}
                 {searchResult.items.length > 0 ? (
                   <div className="search-result-grid">
-                    {searchResult.items.map((item) => (
-                      <button
-                        type="button"
-                        className="search-result-card"
-                        key={`${item.serverId}-${item.characterId}`}
-                        onClick={() => handleSelectCharacter(item)}
-                      >
-                        <div className="search-result-avatar">
-                          {item.profileImageUrl ? (
-                            <img src={item.profileImageUrl} alt={item.name} />
-                          ) : (
-                            <div className="search-result-avatar placeholder" />
-                          )}
+                    {searchResult.items.map((item) => {
+                      const fav = isFavorite(
+                        String(item.serverId ?? ''),
+                        item.characterId,
+                      )
+                      return (
+                        <div
+                          className="search-result-card-wrap"
+                          key={`${item.serverId}-${item.characterId}`}
+                        >
+                          <button
+                            type="button"
+                            className="search-result-card"
+                            onClick={() => handleSelectCharacter(item)}
+                          >
+                            <div className="search-result-avatar">
+                              {item.profileImageUrl ? (
+                                <img
+                                  src={item.profileImageUrl}
+                                  alt={item.name}
+                                />
+                              ) : (
+                                <div className="search-result-avatar placeholder" />
+                              )}
+                            </div>
+                            <div className="search-result-info">
+                              <div className="search-result-name">
+                                {item.name}
+                              </div>
+                              <div className="search-result-sub-row">
+                                <span className="search-result-sub">
+                                  {item.serverName ?? '알 수 없음'}
+                                </span>
+                                <button
+                                  type="button"
+                                  className={`favorite-star ${fav ? 'is-favorite' : ''}`}
+                                  aria-label={fav ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+                                  onClick={(e) => handleFavoriteClick(e, item)}
+                                >
+                                  {fav ? '★' : '☆'}
+                                </button>
+                              </div>
+                              <div className="search-result-stats">
+                                <span>전투력 {item.combatPower ?? '-'}</span>
+                                {item.level ? (
+                                  <span>· Lv.{item.level}</span>
+                                ) : null}
+                              </div>
+                            </div>
+                          </button>
                         </div>
-                        <div className="search-result-info">
-                          <div className="search-result-name">{item.name}</div>
-                          <div className="search-result-sub">
-                            {item.serverName ?? '알 수 없음'}
-                          </div>
-                          <div className="search-result-stats">
-                            <span>전투력 {item.combatPower ?? '-'}</span>
-                            {item.level ? <span>· Lv.{item.level}</span> : null}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
+                      )
+                    })}
                   </div>
                 ) : (
                   <div className="result-empty">
@@ -346,11 +458,70 @@ export default function SearchPage() {
             )}
           </div>
           <div className="divider" />
-          <div className="panel-title">
-            <span>즐겨찾기한 캐릭터</span>
-            <span className="panel-sub">0명</span>
+          <div className="favorites-panel">
+            <div className="panel-title favorites-panel-title">
+              <span className="favorites-panel-title-left">
+                <span className="favorites-panel-title-icon">★</span>
+                <span>즐겨찾기한 캐릭터</span>
+              </span>
+              <span className="panel-sub">{favorites.length}명</span>
+            </div>
+            <div className="favorites-panel-body">
+              {favorites.length === 0 ? (
+                <div className="favorites-empty">
+                  즐겨찾는 캐릭터를 등록해보세요
+                </div>
+              ) : (
+                <ul className="favorites-list">
+                  {favorites.map((fav) => (
+                    <li key={`${fav.serverId}-${fav.characterId}`}>
+                      <button
+                        type="button"
+                        className="favorites-item"
+                        onClick={() => {
+                          const encodedId = encodeURIComponent(fav.characterId)
+                          navigate(`/character/${fav.serverId}/${encodedId}`)
+                        }}
+                      >
+                        <div className="favorites-item-avatar">
+                          {fav.profileImage ? (
+                            <img
+                              src={fav.profileImage}
+                              alt={fav.name ?? ''}
+                            />
+                          ) : (
+                            <div className="favorites-item-avatar placeholder" />
+                          )}
+                        </div>
+                        <div className="favorites-item-text">
+                          <span className="favorites-item-name">
+                            {fav.name ?? fav.characterId}
+                          </span>
+                          <span className="favorites-item-server">
+                            {fav.serverName ?? fav.serverId}
+                          </span>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        className="favorite-star is-favorite"
+                        aria-label="즐겨찾기 해제"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setFavorites(() =>
+                            removeFavorite(fav.serverId, fav.characterId),
+                          )
+                        }}
+                      >
+                        ★
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
-          <div className="empty-state">즐겨찾기한 캐릭터를 등록해주세요.</div>
         </div>
 
         <div className="panel server-panel">
@@ -382,36 +553,100 @@ export default function SearchPage() {
       </section>
 
       <section className="grid mid-grid">
-        <div className="panel">
+        <div className="panel napolme-ranking-panel">
           <div className="panel-title">
             <span>나폴미 점수 TOP 5</span>
-            <span className="panel-sub">금주 기준</span>
           </div>
-          <ul className="ranking-list">
-            {topScores.map((item, index) => (
-              <li key={item.name}>
-                <span className="rank-index">{index + 1}</span>
-                <span className="rank-name">{item.name}</span>
-                <span className="rank-count">{item.score}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="napolme-ranking-columns">
+            <div className="napolme-ranking-col napolme-col-elyos">
+              <div className="napolme-ranking-col-title">천족</div>
+              <ul className="ranking-list">
+                {napolmeRanking.elyos.map((item, index) => (
+                  <li key={`elyos-${item.nickname}-${index}`}>
+                    <span className="rank-index">{index + 1}</span>
+                    <span className="rank-name">{item.nickname}</span>
+                    <span className="rank-count">
+                      {item.napolmePoint.toLocaleString()}
+                    </span>
+                  </li>
+                ))}
+                {napolmeRanking.elyos.length === 0 && (
+                  <li className="ranking-empty">데이터 없음</li>
+                )}
+              </ul>
+            </div>
+            <div className="napolme-ranking-col napolme-col-asmo">
+              <div className="napolme-ranking-col-title">마족</div>
+              <ul className="ranking-list">
+                {napolmeRanking.asmo.map((item, index) => (
+                  <li key={`asmo-${item.nickname}-${index}`}>
+                    <span className="rank-index">{index + 1}</span>
+                    <span className="rank-name">{item.nickname}</span>
+                    <span className="rank-count">
+                      {item.napolmePoint.toLocaleString()}
+                    </span>
+                  </li>
+                ))}
+                {napolmeRanking.asmo.length === 0 && (
+                  <li className="ranking-empty">데이터 없음</li>
+                )}
+              </ul>
+            </div>
+          </div>
         </div>
 
         <div className="panel live-panel">
           <div className="panel-title">
             <span>아이온2 LIVE</span>
-            <span className="panel-sub">AION2 공식 채널</span>
+            <a
+              className="panel-sub"
+              href="https://www.youtube.com/@AION2"
+              target="_blank"
+              rel="noreferrer"
+            >
+              AION2 공식 채널
+            </a>
           </div>
-          <div className="live-grid">
-            {liveItems.map((item) => (
-              <div className="live-card" key={item.title}>
-                <div className="live-badge">LIVE</div>
-                <div className="live-thumb" />
-                <div className="live-title">{item.title}</div>
-                <div className="live-viewers">{item.viewers} watching</div>
-              </div>
-            ))}
+          <div className="live-column">
+            <div className="live-column-title">치지직</div>
+            <div className="live-grid live-grid-2x3">
+              {!chzzkLoaded ? (
+                <div className="live-empty">로딩 중…</div>
+              ) : chzzkLives.length === 0 ? (
+                <div className="live-empty">데이터 없음</div>
+              ) : (
+                chzzkLives.map((item) => (
+                  <a
+                    key={item.liveId}
+                    className="live-card"
+                    href={item.liveUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <div className="live-badge">LIVE</div>
+                    <div className="live-thumb">
+                      {item.liveImageUrl ? (
+                        <img
+                          src={item.liveImageUrl}
+                          alt=""
+                          referrerPolicy="no-referrer"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="live-thumb-placeholder" />
+                      )}
+                    </div>
+                    <div className="live-title">{item.liveTitle}</div>
+                    <div className="live-meta">
+                      <span className="live-channel">{item.channelName}</span>
+                      <span className="live-viewers">
+                        {item.concurrentUserCount.toLocaleString()} watching
+                      </span>
+                    </div>
+                  </a>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -458,7 +693,7 @@ export default function SearchPage() {
 
         <div className="panel notice-panel">
           <div className="panel-title">
-            <span>개발 중입니다</span>
+            <span>나폴미 업데이트 내역</span>
           </div>
         </div>
       </section>

@@ -74,6 +74,7 @@ export type CharacterResponse = {
   level: number | null
   serverName: string | null
   className: string | null
+  tribe: string | null
   guild: string | null
   profileImage: string | null
   itemLevel: number | null
