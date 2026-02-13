@@ -263,7 +263,7 @@ export default function SearchPage() {
       setSearchResult(payload.data)
       // 검색 후 랭킹 갱신 → 서버가 직전 랭킹과 비교해 N▲/N▼ 계산
       statApi
-        .getDailySearchRanking({ force: true })
+        .getDailySearchRanking()
         .then((res) => setDailySearchRanking(res.data?.data ?? []))
         .catch(() => {})
       if (
@@ -693,6 +693,7 @@ export default function SearchPage() {
             </div>
           </div>
         </div>
+
       </section>
 
       <section className="grid bottom-grid">
@@ -740,6 +741,7 @@ export default function SearchPage() {
             <span>나폴미 업데이트 내역</span>
           </div>
         </div>
+
       </section>
     </>
   )

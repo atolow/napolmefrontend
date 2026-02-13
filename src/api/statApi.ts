@@ -50,55 +50,13 @@ export type ChzzkLiveItem = {
   liveUrl: string
 }
 
-const DAILY_RANKING_DEDUPE_WINDOW_MS = 1500
-type DailyRankingPromise = ReturnType<
-  typeof http.get<ApiResponse<DailySearchRankItem[]>>
->
-type DailyRankingResponse = Awaited<DailyRankingPromise>
-
-let dailyRankingInFlight: DailyRankingPromise | null = null
-let dailyRankingLastResponse: DailyRankingResponse | null = null
-let dailyRankingLastFetchedAt = 0
-
 export const statApi = {
   getPopular() {
     return http.get<ApiResponse<PopularStatResponse>>('/api/stat/popular')
   },
 
-  getDailySearchRanking(options?: {
-    force?: boolean
-    dedupeWindowMs?: number
-  }) {
-    const force = options?.force === true
-    const dedupeWindowMs =
-      options?.dedupeWindowMs ?? DAILY_RANKING_DEDUPE_WINDOW_MS
-    const now = Date.now()
-
-    if (!force) {
-      if (dailyRankingInFlight) {
-        return dailyRankingInFlight
-      }
-      if (
-        dailyRankingLastResponse &&
-        now - dailyRankingLastFetchedAt < dedupeWindowMs
-      ) {
-        return Promise.resolve(dailyRankingLastResponse)
-      }
-    }
-
-    const request = http
-      .get<ApiResponse<DailySearchRankItem[]>>('/api/stat/daily-search-ranking')
-      .then((res) => {
-        dailyRankingLastResponse = res
-        dailyRankingLastFetchedAt = Date.now()
-        return res
-      })
-      .finally(() => {
-        dailyRankingInFlight = null
-      })
-
-    dailyRankingInFlight = request
-    return request
+  getDailySearchRanking() {
+    return http.get<ApiResponse<DailySearchRankItem[]>>('/api/stat/daily-search-ranking')
   },
 
   getNapolmeRanking() {
