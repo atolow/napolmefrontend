@@ -243,7 +243,7 @@ export default function CharacterDetailPage() {
   const handleToggleDetailFavorite = () => {
     if (!serverId || !decodedCharacterId) return;
     if (currentIsFavorite) {
-      setFavorites((prev) => removeFavorite(serverId, decodedCharacterId));
+      setFavorites(() => removeFavorite(serverId, decodedCharacterId));
     } else {
       const char: FavoriteCharacter = {
         serverId,

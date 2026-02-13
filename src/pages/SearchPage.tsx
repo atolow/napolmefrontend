@@ -6,7 +6,6 @@ import type { BoardUpdateItem } from '../api/characterApi'
 import type {
   ChzzkLiveItem,
   DailySearchRankItem,
-  NapolmeRankItem,
   NapolmeRankingResponse,
 } from '../api/statApi'
 import {
