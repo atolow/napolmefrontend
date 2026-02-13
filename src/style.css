@@ -883,6 +883,115 @@ a.panel-sub:focus {
   cursor: pointer;
 }
 
+.server-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.server-summary-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #1f2a44;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.server-summary-label {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.server-summary-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.server-faction-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.server-faction-card {
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid #1f2a44;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.server-faction-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 6px;
+}
+
+.server-faction-title span {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+/* 천족: 파란색 글씨 */
+.server-faction-elyos .server-faction-title,
+.server-faction-elyos .server-faction-title span,
+.server-faction-elyos .server-detail-name,
+.server-faction-elyos .server-detail-count {
+  color: #60a5fa;
+}
+.server-faction-elyos .server-detail-up {
+  color: #93c5fd;
+  font-weight: 700;
+}
+
+/* 마족: 빨간색 글씨 */
+.server-faction-asmo .server-faction-title,
+.server-faction-asmo .server-faction-title span,
+.server-faction-asmo .server-detail-name,
+.server-faction-asmo .server-detail-count {
+  color: #f87171;
+}
+.server-faction-asmo .server-detail-up {
+  color: #fca5a5;
+  font-weight: 700;
+}
+
+.server-detail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.server-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.server-detail-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #cbd5e1;
+}
+
+.server-detail-up {
+  color: #f87171;
+  font-weight: 700;
+}
+
+.server-detail-count {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
 .server-header {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;

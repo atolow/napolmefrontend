@@ -16,16 +16,58 @@ import {
   type FavoriteCharacter,
 } from '../lib/favorites'
 
-const serverInfo = [
-  { name: '하이네', online: '40,924', rate: '50.05%', trend: 'up' },
-  { name: '베르나', online: '40,522', rate: '49.57%', trend: 'down' },
-  { name: '레비아', online: '31,988', rate: '39.98%', trend: 'down' },
-  { name: '리니', online: '30,161', rate: '38.35%', trend: 'up' },
-  { name: '카이루', online: '28,519', rate: '35.78%', trend: 'up' },
-  { name: '베르칼', online: '23,256', rate: '33.26%', trend: 'down' },
-  { name: '바오르', online: '22,483', rate: '31.89%', trend: 'down' },
-  { name: '오르타', online: '21,829', rate: '30.12%', trend: 'down' },
-]
+const serverStats = {
+  registeredLegion: 41720,
+  registeredCharacter: 1134506,
+  elyosTotal: 520849,
+  asmoTotal: 613657,
+  elyos: [
+    { name: '시엘', count: 37721 },
+    { name: '바이젤', count: 32971 },
+    { name: '네자칸', count: 34342 },
+    { name: '유스티엘', count: 30038 },
+    { name: '프레기온', count: 27516 },
+    { name: '카이시넬', count: 29410 },
+    { name: '타하바타', count: 22095 },
+    { name: '히타니에', count: 20818, up: true },
+    { name: '메스람타에다', count: 17273 },
+    { name: '이슈타르', count: 20270 },
+    { name: '페르노스', count: 17154 },
+    { name: '아리엘', count: 41752, up: true },
+    { name: '나니아', count: 31113, up: true },
+    { name: '카사카', count: 21867 },
+    { name: '포에타', count: 25706 },
+    { name: '티아마트', count: 20290 },
+    { name: '챈가룽', count: 20735 },
+    { name: '바카르마', count: 18854 },
+    { name: '루터스', count: 17552 },
+    { name: '다미누', count: 18269, up: true },
+    { name: '코치룽', count: 15103 },
+  ],
+  asmo: [
+    { name: '이스라펠', count: 41334, up: true },
+    { name: '지켈', count: 39660, up: true },
+    { name: '아스펠', count: 41169, up: true },
+    { name: '마르쿠탄', count: 37119, up: true },
+    { name: '트리니엘', count: 36979, up: true },
+    { name: '에레슈키갈', count: 31993, up: true },
+    { name: '브리트라', count: 28420, up: true },
+    { name: '울고른', count: 19334 },
+    { name: '오다르', count: 18841, up: true },
+    { name: '루미엘', count: 38793, up: true },
+    { name: '하달', count: 25809, up: true },
+    { name: '바바룽', count: 28361 },
+    { name: '크로메데', count: 29703 },
+    { name: '무닌', count: 26963, up: true },
+    { name: '네몬', count: 29521, up: true },
+    { name: '루드라', count: 29991, up: true },
+    { name: '젠카카', count: 25023, up: true },
+    { name: '콰이링', count: 20998, up: true },
+    { name: '이스할겐', count: 22483, up: true },
+    { name: '인드나흐', count: 17407 },
+    { name: '파프니르', count: 23756, up: true },
+  ],
+}
 
 const CHZZK_REFRESH_MS = 30 * 60 * 1000
 
@@ -555,28 +597,66 @@ export default function SearchPage() {
         <div className="panel server-panel">
           <div className="panel-title">
             <span>서버 정보</span>
-            <button className="ghost" type="button">
-              서버 현황 보기 &gt;
-            </button>
           </div>
-          <div className="server-header">
-            <div>서버</div>
-            <div>접속 인원</div>
-            <div>접속률</div>
+
+          <div className="server-summary-grid">
+            <div className="server-summary-card">
+              <span className="server-summary-label">등록된 레기온</span>
+              <span className="server-summary-value">
+                {serverStats.registeredLegion.toLocaleString()}
+              </span>
+            </div>
+            <div className="server-summary-card">
+              <span className="server-summary-label">등록된 캐릭터</span>
+              <span className="server-summary-value">
+                {serverStats.registeredCharacter.toLocaleString()}
+              </span>
+            </div>
           </div>
-          <ul className="server-list">
-            {serverInfo.map((item) => (
-              <li key={item.name} className="server-row">
-                <span className="server-name">{item.name}</span>
-                <span className="server-online">{item.online}</span>
-                <span
-                  className={`server-rate ${item.trend === 'up' ? 'up' : 'down'}`}
-                >
-                  {item.rate}
-                </span>
-              </li>
-            ))}
-          </ul>
+
+          <div className="server-faction-grid">
+            <div className="server-faction-card server-faction-elyos">
+              <div className="server-faction-title">
+                천족 <span>({serverStats.elyosTotal.toLocaleString()})</span>
+              </div>
+              <ul className="server-detail-list">
+                {serverStats.elyos.map((item) => (
+                  <li key={`elyos-${item.name}`} className="server-detail-row">
+                    <span className="server-detail-name">
+                      {item.name}
+                      {item.up ? (
+                        <span className="server-detail-up">▲</span>
+                      ) : null}
+                    </span>
+                    <span className="server-detail-count">
+                      {item.count.toLocaleString()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="server-faction-card server-faction-asmo">
+              <div className="server-faction-title">
+                마족 <span>({serverStats.asmoTotal.toLocaleString()})</span>
+              </div>
+              <ul className="server-detail-list">
+                {serverStats.asmo.map((item) => (
+                  <li key={`asmo-${item.name}`} className="server-detail-row">
+                    <span className="server-detail-name">
+                      {item.name}
+                      {item.up ? (
+                        <span className="server-detail-up">▲</span>
+                      ) : null}
+                    </span>
+                    <span className="server-detail-count">
+                      {item.count.toLocaleString()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
