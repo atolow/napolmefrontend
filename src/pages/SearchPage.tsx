@@ -263,7 +263,7 @@ export default function SearchPage() {
       setSearchResult(payload.data)
       // 검색 후 랭킹 갱신 → 서버가 직전 랭킹과 비교해 N▲/N▼ 계산
       statApi
-        .getDailySearchRanking()
+        .getDailySearchRanking({ force: true })
         .then((res) => setDailySearchRanking(res.data?.data ?? []))
         .catch(() => {})
       if (
