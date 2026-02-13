@@ -211,7 +211,7 @@ export default function SearchPage() {
   const isSearchDisabled = isSearching
   const helperMessage = statusMessage
 
-  const handleSearch = async (searchQuery?: string) => {
+  const handleSearch = async (searchQuery?: string, overrideServerId?: string | null) => {
     const trimmedQuery = (searchQuery ?? query).trim()
     if (!trimmedQuery || isSearchDisabled) {
       if (!trimmedQuery) {
@@ -220,7 +220,15 @@ export default function SearchPage() {
       return
     }
 
-    if (serverId === ALL_SERVER_OPTION.id) {
+    const effectiveServerId = overrideServerId !== undefined && overrideServerId !== null && overrideServerId !== ''
+      ? overrideServerId
+      : serverId
+    if (overrideServerId !== undefined && overrideServerId !== null && overrideServerId !== '') {
+      setServerId(overrideServerId)
+    }
+    setQuery(trimmedQuery)
+
+    if (effectiveServerId === ALL_SERVER_OPTION.id) {
       const params = new URLSearchParams({
         query: trimmedQuery,
         race: serverFilter,
@@ -235,7 +243,7 @@ export default function SearchPage() {
 
     try {
       const response = await characterApi.searchCharacters({
-        server: serverId,
+        server: effectiveServerId,
         name: trimmedQuery,
       })
       const payload = response.data
@@ -290,17 +298,21 @@ export default function SearchPage() {
             {dailySearchRanking.map((item, index) => (
               <li key={`${item.name}-${index}`}>
                 <span className="rank-index">{index + 1}</span>
-                <span
-                  className={`rank-name daily-rank-name ${
+                <button
+                  type="button"
+                  className={`rank-name daily-rank-name rank-name-link ${
                     item.tribe === 'elyos'
                       ? 'tribe-elyos'
                       : item.tribe === 'asmo'
                         ? 'tribe-asmo'
                         : ''
                   }`}
+                  onClick={() => {
+                    handleSearch(item.name, item.serverId ?? undefined)
+                  }}
                 >
                   {item.name}
-                </span>
+                </button>
                 <span
                   className={`rank-change ${
                     item.rankChange === 'up'
@@ -563,7 +575,15 @@ export default function SearchPage() {
                 {napolmeRanking.elyos.map((item, index) => (
                   <li key={`elyos-${item.nickname}-${index}`}>
                     <span className="rank-index">{index + 1}</span>
-                    <span className="rank-name">{item.nickname}</span>
+                    <button
+                      type="button"
+                      className="rank-name rank-name-link"
+                      onClick={() => {
+                        handleSearch(item.nickname, item.serverId ?? undefined)
+                      }}
+                    >
+                      {item.nickname}
+                    </button>
                     <span className="rank-count">
                       {item.napolmePoint.toLocaleString()}
                     </span>
@@ -580,7 +600,15 @@ export default function SearchPage() {
                 {napolmeRanking.asmo.map((item, index) => (
                   <li key={`asmo-${item.nickname}-${index}`}>
                     <span className="rank-index">{index + 1}</span>
-                    <span className="rank-name">{item.nickname}</span>
+                    <button
+                      type="button"
+                      className="rank-name rank-name-link"
+                      onClick={() => {
+                        handleSearch(item.nickname, item.serverId ?? undefined)
+                      }}
+                    >
+                      {item.nickname}
+                    </button>
                     <span className="rank-count">
                       {item.napolmePoint.toLocaleString()}
                     </span>

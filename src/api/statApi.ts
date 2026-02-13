@@ -23,11 +23,14 @@ export type DailySearchRankItem = {
   changeAmount?: number
   /** elyos(천족) | asmo(마족) | null */
   tribe?: string | null
+  /** 해당 캐릭터가 검색된 서버 ID (클릭 시 해당 서버로 검색) */
+  serverId?: string | null
 }
 
 export type NapolmeRankItem = {
   nickname: string
   napolmePoint: number
+  serverId: string | null
   serverName: string | null
 }
 
