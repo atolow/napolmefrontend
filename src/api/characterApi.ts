@@ -77,6 +77,7 @@ export type CharacterResponse = {
   guild: string | null
   profileImage: string | null
   itemLevel: number | null
+  napolmePoint: number | null
   lastSyncedAt: string | null
   createdAt: string
   updatedAt: string
