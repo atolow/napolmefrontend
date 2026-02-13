@@ -55,7 +55,6 @@ export default function App() {
             </span>
             <div>
               <div className="brand-name">나폴미</div>
-              <div className="brand-sub">Napolme</div>
             </div>
           </Link>
 
@@ -84,12 +83,12 @@ export default function App() {
             </button>
           </nav>
 
-          <span className="cta-discord" role="presentation" aria-label="아이온2 공식 디코방">
-            <img
-              src="/discord-icon.png"
-              alt=""
-              className="cta-discord-icon"
-            />
+          <span
+            className="cta-discord"
+            role="presentation"
+            aria-label="아이온2 공식 디코방"
+          >
+            <img src="/discord-icon.png" alt="" className="cta-discord-icon" />
             <span className="cta-discord-text">아이온2 공식 디코방</span>
           </span>
         </header>
