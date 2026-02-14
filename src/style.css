@@ -1183,6 +1183,133 @@ a.live-card:hover {
   color: #7aa2ff;
 }
 
+.update-link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: #e2e8f0;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.update-link-button:hover {
+  color: #7aa2ff;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal-content {
+  background: #111827;
+  border: 1px solid #1f2a44;
+  border-radius: 16px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content-napolme-write {
+  max-width: 420px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #1f2a44;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.modal-close:hover:not(:disabled) {
+  color: #e2e8f0;
+}
+
+.modal-body {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.napolme-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #cbd5e1;
+}
+
+.napolme-write-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 12px;
+}
+
+.napolme-write-label:last-of-type {
+  margin-bottom: 0;
+}
+
+.napolme-write-input {
+  padding: 8px 10px;
+  border: 1px solid #1f2a44;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 13px;
+}
+
+.napolme-write-textarea {
+  padding: 8px 10px;
+  border: 1px solid #1f2a44;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid #1f2a44;
+}
+
 .notice-panel {
   display: flex;
   flex-direction: column;

@@ -411,4 +411,27 @@ export const characterApi = {
       params: { size, lang: 'ko' },
     })
   },
+
+  getNapolmeUpdates() {
+    return http.get<ApiResponse<NapolmeUpdatesResponse>>('/api/board/napolme-updates')
+  },
+
+  createNapolmeUpdate(title: string, content: string) {
+    return http.post<ApiResponse<NapolmeUpdateItem>>('/api/board/napolme-updates', {
+      title,
+      content,
+    })
+  },
+}
+
+export type NapolmeUpdateItem = {
+  id: number
+  title: string
+  content: string
+  createdAt: string
+}
+
+export type NapolmeUpdatesResponse = {
+  items: NapolmeUpdateItem[]
+  allowWrite: boolean
 }

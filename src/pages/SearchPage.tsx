@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { characterApi, statApi } from '../api'
+import type {
+  BoardUpdateItem,
+  NapolmeUpdateItem,
+  NapolmeUpdatesResponse,
+} from '../api/characterApi'
 import type { CharacterSearchResponse, CharacterSummary } from '../api/characterApi'
-import type { BoardUpdateItem } from '../api/characterApi'
 import type {
   ChzzkLiveItem,
   DailySearchRankItem,
@@ -181,6 +185,15 @@ export default function SearchPage() {
   const [chzzkLoaded, setChzzkLoaded] = useState(false)
   const [updates, setUpdates] = useState<BoardUpdateItem[]>([])
   const [updateStatus, setUpdateStatus] = useState('')
+  const [napolmeUpdates, setNapolmeUpdates] = useState<NapolmeUpdatesResponse>({
+    items: [],
+    allowWrite: false,
+  })
+  const [napolmeViewItem, setNapolmeViewItem] = useState<NapolmeUpdateItem | null>(null)
+  const [napolmeWriteOpen, setNapolmeWriteOpen] = useState(false)
+  const [napolmeWriteTitle, setNapolmeWriteTitle] = useState('')
+  const [napolmeWriteContent, setNapolmeWriteContent] = useState('')
+  const [napolmeWriteSubmitting, setNapolmeWriteSubmitting] = useState(false)
 
   const serverOptions = useMemo(() => {
     if (serverFilter === 'elyos') {
@@ -255,6 +268,15 @@ export default function SearchPage() {
       mounted = false
       window.clearInterval(timer)
     }
+  }, [])
+
+  useEffect(() => {
+    characterApi
+      .getNapolmeUpdates()
+      .then((res) =>
+        setNapolmeUpdates(res.data?.data ?? { items: [], allowWrite: false }),
+      )
+      .catch(() => setNapolmeUpdates({ items: [], allowWrite: false }))
   }, [])
 
   const isSearchDisabled = isSearching
@@ -809,12 +831,160 @@ export default function SearchPage() {
         </div>
 
         <div className="panel notice-panel">
-          <div className="panel-title">
+          <div className="panel-title panel-title-row">
             <span>나폴미 업데이트 내역</span>
+            {napolmeUpdates.allowWrite && (
+              <button
+                type="button"
+                className="ghost"
+                onClick={() => setNapolmeWriteOpen(true)}
+              >
+                글쓰기
+              </button>
+            )}
           </div>
+          <ul className="updates-list">
+            {napolmeUpdates.items.length > 0 ? (
+              napolmeUpdates.items.map((item) => (
+                <li key={item.id}>
+                  <span className="update-date">
+                    {formatDateTime(item.createdAt)}
+                  </span>
+                  <button
+                    type="button"
+                    className="update-link update-link-button"
+                    onClick={() => setNapolmeViewItem(item)}
+                  >
+                    {item.title}
+                  </button>
+                </li>
+              ))
+            ) : (
+              <li className="updates-empty">내역이 없습니다.</li>
+            )}
+          </ul>
         </div>
 
       </section>
+
+      {napolmeViewItem && (
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setNapolmeViewItem(null)}
+        >
+          <div
+            className="modal-content modal-content-napolme"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">{napolmeViewItem.title}</h3>
+              <button
+                type="button"
+                className="modal-close"
+                aria-label="닫기"
+                onClick={() => setNapolmeViewItem(null)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body napolme-content">
+              {napolmeViewItem.content}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {napolmeWriteOpen && (
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => !napolmeWriteSubmitting && setNapolmeWriteOpen(false)}
+        >
+          <div
+            className="modal-content modal-content-napolme-write"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">글쓰기</h3>
+              <button
+                type="button"
+                className="modal-close"
+                aria-label="닫기"
+                disabled={napolmeWriteSubmitting}
+                onClick={() =>
+                  !napolmeWriteSubmitting && setNapolmeWriteOpen(false)
+                }
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <label className="napolme-write-label">
+                글 제목
+                <input
+                  type="text"
+                  className="napolme-write-input"
+                  value={napolmeWriteTitle}
+                  onChange={(e) => setNapolmeWriteTitle(e.target.value)}
+                  placeholder="제목"
+                />
+              </label>
+              <label className="napolme-write-label">
+                글 내용
+                <textarea
+                  className="napolme-write-textarea"
+                  value={napolmeWriteContent}
+                  onChange={(e) => setNapolmeWriteContent(e.target.value)}
+                  placeholder="내용"
+                  rows={6}
+                />
+              </label>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="ghost"
+                onClick={() =>
+                  !napolmeWriteSubmitting && setNapolmeWriteOpen(false)
+                }
+                disabled={napolmeWriteSubmitting}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="primary"
+                disabled={napolmeWriteSubmitting}
+                onClick={() => {
+                  setNapolmeWriteSubmitting(true)
+                  characterApi
+                    .createNapolmeUpdate(napolmeWriteTitle, napolmeWriteContent)
+                    .then(() => {
+                      return characterApi.getNapolmeUpdates()
+                    })
+                    .then((res) => {
+                      setNapolmeUpdates(
+                        res.data?.data ?? {
+                          items: [],
+                          allowWrite: napolmeUpdates.allowWrite,
+                        },
+                      )
+                      setNapolmeWriteOpen(false)
+                      setNapolmeWriteTitle('')
+                      setNapolmeWriteContent('')
+                    })
+                    .finally(() => setNapolmeWriteSubmitting(false))
+                }}
+              >
+                {napolmeWriteSubmitting ? '등록 중…' : '등록'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
