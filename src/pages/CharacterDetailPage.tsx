@@ -358,15 +358,27 @@ export default function CharacterDetailPage() {
   }, [refreshCooldownSeconds]);
 
   const handleRefreshSaved = async () => {
-    if (!serverId || !decodedCharacterId || isRefreshing || refreshCooldownSeconds > 0) return;
+    if (!serverId || !decodedCharacterId || isRefreshing) return;
     setIsRefreshing(true);
     try {
       let cooldown = 0;
       if (savedCharacterId != null) {
         const res = await characterApi.refreshCharacter(savedCharacterId);
+        // 서버가 cooldown 중이면 에러 코드로 응답
+        if (res.data?.code === 'COOLDOWN_ACTIVE') {
+          setRefreshCooldownSeconds(res.data?.cooldown ?? 0);
+          setIsRefreshing(false);
+          return;
+        }
         cooldown = res.data?.cooldown ?? 0;
       } else {
         const res = await characterApi.fetchByRef(serverId, decodedCharacterId);
+        // 서버가 cooldown 중이면 에러 코드로 응답
+        if (res.data?.code === 'COOLDOWN_ACTIVE') {
+          setRefreshCooldownSeconds(res.data?.cooldown ?? 0);
+          setIsRefreshing(false);
+          return;
+        }
         const id = res.data?.data?.id;
         if (typeof id === "number") setSavedCharacterId(id);
         cooldown = res.data?.cooldown ?? 0;
@@ -773,7 +785,7 @@ export default function CharacterDetailPage() {
             className="primary detail-refresh-btn"
             type="button"
             onClick={handleRefreshSaved}
-            disabled={isRefreshing || refreshCooldownSeconds > 0}
+            disabled={isRefreshing}
             title={refreshCooldownSeconds > 0 ? `${refreshCooldownSeconds}초 후 갱신 가능` : undefined}
           >
             {isRefreshing

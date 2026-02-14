@@ -48,14 +48,12 @@ export default function SearchResultsPage() {
       setStatusMessage('')
       setSearchResult(null)
       try {
-        const useNewSearch = serverId && serverId !== 'ALL'
-        const response = useNewSearch
-          ? await characterApi.searchCharacters({ server: serverId, name: query })
-          : await characterApi.search({
-              query,
-              server: undefined,
-              race: getRaceParam(raceFilter),
-            })
+        // 서버가 자동으로 판단하도록 항상 동일한 API 호출
+        const response = await characterApi.searchCharacters({
+          server: serverId && serverId !== 'ALL' ? serverId : undefined,
+          name: query,
+          race: getRaceParam(raceFilter),
+        })
         setSearchResult(response.data.data)
         setStatusMessage('')
       } catch (error) {

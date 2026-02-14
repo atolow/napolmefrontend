@@ -11,6 +11,7 @@ import SearchPage from "./pages/SearchPage";
 import SearchResultsPage from "./pages/SearchResultsPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import NicknameGeneratorPage from "./pages/NicknameGeneratorPage";
 
 declare global {
   interface Window {
@@ -25,6 +26,7 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const isSearchRoute = location.pathname === "/";
+  const isNicknameGeneratorRoute = location.pathname === "/nickname-generator";
 
   useEffect(() => {
     try {
@@ -81,6 +83,14 @@ export default function App() {
             <button className="menu-chip" type="button">
               서버 비교
             </button>
+            <button
+              className={`menu-chip ${isNicknameGeneratorRoute ? "is-active" : ""}`}
+              type="button"
+              onClick={() => navigate("/nickname-generator")}
+            >
+              닉네임 생성기
+              <span className="menu-chip-badge">N</span>
+            </button>
           </nav>
 
           <span
@@ -100,6 +110,7 @@ export default function App() {
             path="/character/:serverId/:characterId"
             element={<CharacterDetailPage />}
           />
+          <Route path="/nickname-generator" element={<NicknameGeneratorPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>

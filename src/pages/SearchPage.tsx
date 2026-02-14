@@ -303,13 +303,10 @@ export default function SearchPage() {
         .getDailySearchRanking()
         .then((res) => setDailySearchRanking(res.data?.data ?? []))
         .catch(() => {})
-      if (
-        payload.data.items.length === 1 &&
-        payload.data.items[0]
-      ) {
-        const item = payload.data.items[0]
-        const encodedId = encodeURIComponent(item.characterId)
-        navigate(`/character/${item.serverId}/${encodedId}`)
+      // 서버가 redirectUrl을 제공하면 자동으로 이동
+      if (payload.data.redirectUrl) {
+        navigate(payload.data.redirectUrl)
+        return
       }
     } catch (error) {
       setStatusMessage('현재 서버 부하가 높음')

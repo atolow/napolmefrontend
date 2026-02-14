@@ -33,6 +33,7 @@ export type CharacterSearchResponse = {
   total: number
   items: CharacterSummary[]
   cache: CachePolicy
+  redirectUrl?: string | null
 }
 
 export type BoardUpdateItem = {
@@ -89,6 +90,7 @@ export type CharactersSearchParams = {
   server?: string
   name?: string
   nickname?: string
+  race?: number
 }
 
 export type CharacterInfoResponse = {
