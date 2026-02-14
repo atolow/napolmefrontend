@@ -12,6 +12,7 @@ import type {
   DailySearchRankItem,
   NapolmeRankingResponse,
 } from '../api/statApi'
+import { formatDateTimeKST } from '../lib/date'
 import {
   getFavorites,
   isFavorite,
@@ -129,25 +130,6 @@ const serverFilterLabels = {
   all: '서버 전체',
   elyos: '천족 서버',
   asmo: '마족 서버',
-}
-
-/** 날짜·시간 표시 (한국 시간 KST, YYYY-MM-DD HH:mm) */
-const KST = 'Asia/Seoul'
-const formatDateTime = (value?: string | null) => {
-  if (!value) return ''
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return value
-  const parts = new Intl.DateTimeFormat('ko-KR', {
-    timeZone: KST,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(parsed)
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
-  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`
 }
 
 /** 일일 검색 랭킹 순위 변동 표시: 7▲(7위 상승) / 3▼(3위 하락) / - */
@@ -809,7 +791,7 @@ export default function SearchPage() {
                 <li key={`${item.url}-${item.title}`}>
                   {item.date ? (
                     <span className="update-date">
-                      {formatDateTime(item.date)}
+                      {formatDateTimeKST(item.date)}
                     </span>
                   ) : null}
                   <a
@@ -848,7 +830,7 @@ export default function SearchPage() {
               napolmeUpdates.items.map((item) => (
                 <li key={item.id}>
                   <span className="update-date">
-                    {formatDateTime(item.createdAt)}
+                    {formatDateTimeKST(item.createdAt)}
                   </span>
                   <button
                     type="button"

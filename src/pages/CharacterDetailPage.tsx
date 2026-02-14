@@ -9,6 +9,7 @@ import type {
   CharacterInfoResponse,
   CharacterSummary,
 } from "../api/characterApi";
+import { formatDateTimeKST } from "../lib/date";
 import {
   addFavorite,
   getFavorites,
@@ -155,26 +156,6 @@ const serverFilterLabels = {
   all: "서버 전체",
   elyos: "천족 서버",
   asmo: "마족 서버",
-};
-
-/** 날짜·시간 표시 (한국 시간 KST, YYYY-MM-DD HH:mm:ss) */
-const KST = "Asia/Seoul";
-const formatDateTime = (value?: string | null) => {
-  if (!value) return "";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  const parts = new Intl.DateTimeFormat("ko-KR", {
-    timeZone: KST,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(parsed);
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-  return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}:${get("second")}`;
 };
 
 export default function CharacterDetailPage() {
@@ -796,7 +777,7 @@ export default function CharacterDetailPage() {
           </button>
           <span className="detail-updated">
             {characterInfo?.lastUpdated
-              ? `업데이트 ${formatDateTime(characterInfo.lastUpdated)}`
+              ? `업데이트 ${formatDateTimeKST(characterInfo.lastUpdated, { withSeconds: true })}`
               : "업데이트 정보 없음"}
           </span>
         </div>
