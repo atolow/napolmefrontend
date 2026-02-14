@@ -434,6 +434,4 @@ export type NapolmeUpdateItem = {
 export type NapolmeUpdatesResponse = {
   items: NapolmeUpdateItem[]
   allowWrite: boolean
-  /** 서버가 본 클라이언트 IP (debug=1 쿼리 시에만 내려옴) */
-  seenIp?: string | null
 }
