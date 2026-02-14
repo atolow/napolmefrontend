@@ -127,28 +127,23 @@ const serverFilterLabels = {
   asmo: '마족 서버',
 }
 
-/** 날짜·시간 표시 (초 제외, YYYY-MM-DD HH:mm) */
+/** 날짜·시간 표시 (한국 시간 KST, YYYY-MM-DD HH:mm) */
+const KST = 'Asia/Seoul'
 const formatDateTime = (value?: string | null) => {
-  if (!value) {
-    return ''
-  }
-  const normalized = value.replace('T', ' ')
-  const match = normalized.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/)
-  if (match) {
-    return match[0]
-  }
-  const fullMatch = normalized.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)
-  if (fullMatch) {
-    return fullMatch[0].slice(0, 16)
-  }
+  if (!value) return ''
   const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return value
-  }
-  const pad = (num: number) => String(num).padStart(2, '0')
-  return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(
-    parsed.getDate(),
-  )} ${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`
+  if (Number.isNaN(parsed.getTime())) return value
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: KST,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(parsed)
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
+  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`
 }
 
 /** 일일 검색 랭킹 순위 변동 표시: 7▲(7위 상승) / 3▼(3위 하락) / - */

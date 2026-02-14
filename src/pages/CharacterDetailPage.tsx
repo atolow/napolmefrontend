@@ -157,20 +157,24 @@ const serverFilterLabels = {
   asmo: "마족 서버",
 };
 
+/** 날짜·시간 표시 (한국 시간 KST, YYYY-MM-DD HH:mm:ss) */
+const KST = "Asia/Seoul";
 const formatDateTime = (value?: string | null) => {
-  if (!value) {
-    return "";
-  }
+  if (!value) return "";
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-  const pad = (num: number) => String(num).padStart(2, "0");
-  return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(
-    parsed.getDate(),
-  )} ${pad(parsed.getHours())}:${pad(parsed.getMinutes())}:${pad(
-    parsed.getSeconds(),
-  )}`;
+  if (Number.isNaN(parsed.getTime())) return value;
+  const parts = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: KST,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(parsed);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}:${get("second")}`;
 };
 
 export default function CharacterDetailPage() {
@@ -1791,8 +1795,16 @@ export default function CharacterDetailPage() {
             <div className="panel">
               <div className="subpanel-title arcana-title">칭호</div>
               <div className="summary-titles">
-                {(characterInfo?.topTitles ?? [])
-                  .slice(0, 3)
+                {[...(characterInfo?.topTitles ?? [])]
+                  .sort((a, b) => {
+                    const order = (c: string | null) => {
+                      const k = (c ?? "").toLowerCase();
+                      return k === "attack" ? 0 : k === "defense" ? 1 : k === "etc" ? 2 : 3;
+                    };
+                    return (
+                      order(a.equipCategory ?? null) - order(b.equipCategory ?? null)
+                    );
+                  })
                   .map((title, index) => (
                     <div className="summary-title-card" key={title.id ?? index}>
                       <span
