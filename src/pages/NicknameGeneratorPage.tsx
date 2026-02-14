@@ -624,7 +624,7 @@ export default function NicknameGeneratorPage() {
           </div>
         )}
 
-        {/* 가챠 버튼들 (직접입력 모드 제외) */}
+        {/* 닉네임 버튼들 (직접입력 모드 제외) */}
         {mode !== 'direct' && (
           <div className="generator-gacha-buttons">
             <button
@@ -636,7 +636,7 @@ export default function NicknameGeneratorPage() {
                 (mode === 'combination' && (selectedInitials.size === 0 || selectedMedials.size === 0))
               }
             >
-              한글자 가챠
+              한글자 닉네임
             </button>
             <button
               type="button"
@@ -647,7 +647,7 @@ export default function NicknameGeneratorPage() {
                 (mode === 'combination' && (selectedInitials.size === 0 || selectedMedials.size === 0))
               }
             >
-              두글자 가챠
+              두글자 닉네임
             </button>
             <button
               type="button"
@@ -658,7 +658,7 @@ export default function NicknameGeneratorPage() {
                 (mode === 'combination' && (selectedInitials.size === 0 || selectedMedials.size === 0))
               }
             >
-              세글자 가챠
+              세글자 닉네임
             </button>
             <button
               type="button"
@@ -669,7 +669,7 @@ export default function NicknameGeneratorPage() {
                 (mode === 'combination' && (selectedInitials.size === 0 || selectedMedials.size === 0))
               }
             >
-              네글자 가챠
+              네글자 닉네임
             </button>
             <button
               type="button"
@@ -680,7 +680,7 @@ export default function NicknameGeneratorPage() {
                 (mode === 'combination' && (selectedInitials.size === 0 || selectedMedials.size === 0))
               }
             >
-              다섯글자 가챠
+              다섯글자 닉네임
             </button>
             <button
               type="button"
@@ -691,7 +691,7 @@ export default function NicknameGeneratorPage() {
                 (mode === 'combination' && (selectedInitials.size === 0 || selectedMedials.size === 0))
               }
             >
-              여섯글자 가챠
+              여섯글자 닉네임
             </button>
           </div>
         )}
